@@ -2,4 +2,4 @@ src
 .idea
 tests
 dist/scripts
-
+*.js___jb_tmp___

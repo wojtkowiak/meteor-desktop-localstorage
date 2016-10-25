@@ -22,7 +22,7 @@ export default class LocalStorage {
      * @param {Object} eventsBus        - event emitter for listening or emitting events on the
      *                                    desktop side
      * @param {Object} modules          - reference to all loaded modules
-     * @param {string} fileName         - the name of the json file
+     * @param {PluginSettings} fileName - the name of the json file
      * @param {Object} Module           - reference to Module class
      */
     constructor(
@@ -40,6 +40,7 @@ export default class LocalStorage {
         this.storage = {};
         this.initDone = false;
         this.eventsBus = eventsBus;
+        this.log = log.loggers.get('meteor-desktop-localstorage');
 
         eventsBus.on('afterLoading', () => {
             this.init();
@@ -67,7 +68,9 @@ export default class LocalStorage {
         });
 
         storageModule.on('getAll', (event, fetchId) => {
+            this.log.verbose('getAll received');
             if (this.initDone) {
+                this.log.verbose('sent storage to renderer');
                 storageModule.respond('getAll', fetchId, this.storage);
             }
         });
@@ -92,7 +95,9 @@ export default class LocalStorage {
             } else {
                 try {
                     storage = JSON.parse(data);
+                    this.log.info(`loaded storage file ${this.storageFile}`);
                 } catch (e) {
+                    this.log.warn(`could not parse the storage file ${this.storageFile}`);
                     // Nothing to do here. We will put a fresh file in place few lines below.
                 }
                 if (Object.keys(this.storage).length > 0) {
@@ -103,6 +108,7 @@ export default class LocalStorage {
                 this.flush();
             }
             this.initDone = true;
+            this.log.info(`have ${Object.keys(this.storage).length} keys`);
             this.eventsBus.emit('localStorage.loaded');
         });
     }

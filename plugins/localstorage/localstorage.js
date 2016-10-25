@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 function load() {
-    Desktop.fetch('storage', 'getAll').then((storage) => {
+    Desktop.fetch('localStorage', 'getAll').then((storage) => {
         Meteor._localStorage.storage = storage;
     }).catch(() => {
         load();

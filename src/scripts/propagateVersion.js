@@ -9,3 +9,6 @@ paths.forEach((path) => {
     packageJs = packageJs.replace(/(version: ')([^']+)'/, `$1${version}'`);
     fs.writeFileSync(path, packageJs);
 });
+let readme = fs.readFileSync('README.md', 'UTF-8');
+readme = readme.replace(/(version": ")([^"]+)"/, `$1${version}"`);
+fs.writeFileSync('README.md', readme);

@@ -5,11 +5,13 @@ import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
 import {
-    getElectronPath, createTestApp, sendIpc, sendModuleEvent
+    getElectronPath, constructPlugin, createTestApp, send, fetch,
+    fireEventsBusEventAndWaitForAnother
 } from
     'meteor-desktop-plugin-test-suite';
 
 let userData;
+let storageFile;
 
 async function getApp(t) {
     const app = t.context.app;
@@ -24,10 +26,10 @@ function wait(ms) {
     });
 }
 
-const appDir = path.join(__dirname, '..', 'testApp');
+const appDir = path.join(__dirname, '..', '.testApp');
 
 test.before(
-    async() => {
+    async () => {
         await createTestApp(appDir, 'meteor-desktop-localstorage');
     }
 );
@@ -39,86 +41,116 @@ test.after(
     }
 );
 
-test.beforeEach(async(t) => {
+test.beforeEach(async (t) => {
     t.context.app = new Application({
         path: getElectronPath(),
-        args: [path.join(__dirname, '..', 'testApp')],
+        args: [appDir],
         env: { ELECTRON_ENV: 'test' }
     });
     await t.context.app.start();
     userData = await t.context.app.electron.remote.app.getPath('userData');
 });
 
-test.afterEach.always(async(t) => {
-    shell.rm('-f', path.join(userData, 'localstorage.json'));
+test.afterEach.always(async (t) => {
+    if (storageFile) {
+        shell.rm('-f', path.join(userData, storageFile));
+    }
     if (t.context.app && t.context.app.isRunning()) {
         await t.context.app.stop();
     }
 });
 
-function readLocalStorageFile() {
-    return fs.readFileSync(path.join(userData, 'localstorage.json'), 'utf8');
+function readLocalStorageFile(filename = 'localstorage.json') {
+    return fs.readFileSync(path.join(userData, filename), 'utf8');
 }
 
 test('the test app', async t => await getApp(t));
 
-test('if storage file is initialized', async(t) => {
+test.serial('if storage file is initialized', async (t) => {
     const app = await getApp(t);
-    await sendIpc(app, 'constructPlugin');
-    await sendIpc(app, 'fireSystemEvent', 'afterLoading');
-    await wait(500);
+    storageFile = 'localstorage.json';
+    await constructPlugin(app);
+    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
     const localstorage = readLocalStorageFile();
-    t.is(localstorage, JSON.stringify({}));
+    t.is(localstorage, '{}');
 });
 
-test('set', async(t) => {
+test.serial('if custom filename can be passed', async (t) => {
     const app = await getApp(t);
-    await sendIpc(app, 'constructPlugin');
-    await sendIpc(app, 'fireSystemEvent', 'afterLoading');
-    await wait(500);
-    let localstorage = readLocalStorageFile();
+    storageFile = 'test.json';
+    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
+        fileName: 'test.json'
+    });
+    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    await send(app, 'localStorage', 'set', 'key', 'value');
+    await wait(100);
+    t.is(readLocalStorageFile('test.json'), JSON.stringify({ key: 'value' }));
+});
+
+// TODO: figure out running test apps with unique chromedriver port so that we could
+// run the test below concurrently.
+
+test('set', async (t) => {
+    const app = await getApp(t);
+    storageFile = 'test_set.json';
+    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
+        fileName: storageFile
+    });
+    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    let localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({}));
-    await sendModuleEvent(app, 'localStorage', 'set', 'key', 'value');
-    await wait(500);
-    localstorage = readLocalStorageFile();
+    await send(app, 'localStorage', 'set', 'key', 'value');
+    await wait(100);
+    localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({ key: 'value' }));
 });
 
-test('clear', async(t) => {
+test('clear', async (t) => {
     const app = await getApp(t);
-    await sendIpc(app, 'constructPlugin');
-    await sendIpc(app, 'fireSystemEvent', 'afterLoading');
-    await wait(500);
-    let localstorage = readLocalStorageFile();
+    storageFile = 'test_clear.json';
+    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
+        fileName: storageFile
+    });
+    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    let localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({}));
-    await sendModuleEvent(app, 'localStorage', 'set', 'key', 'value');
-    await wait(500);
-    localstorage = readLocalStorageFile();
+    await send(app, 'localStorage', 'set', 'key', 'value');
+    await wait(100);
+    localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({ key: 'value' }));
-    await sendModuleEvent(app, 'localStorage', 'clear');
-    await wait(500);
-    localstorage = readLocalStorageFile();
+    await send(app, 'localStorage', 'clear');
+    await wait(100);
+    localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({}));
 });
 
-test('remove', async(t) => {
+test('remove', async (t) => {
     const app = await getApp(t);
-    await sendIpc(app, 'constructPlugin');
-    await sendIpc(app, 'fireSystemEvent', 'afterLoading');
-    await wait(500);
-    let localstorage = readLocalStorageFile();
+    storageFile = 'test_remove.json';
+    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
+        fileName: storageFile
+    });
+    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    let localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({}));
-    await sendModuleEvent(app, 'localStorage', 'set', 'key', 'value');
-    await wait(500);
-    localstorage = readLocalStorageFile();
+    await send(app, 'localStorage', 'set', 'key', 'value');
+    await wait(100);
+    localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({ key: 'value' }));
-    await sendModuleEvent(app, 'localStorage', 'remove', 'key');
-    await wait(500);
-    localstorage = readLocalStorageFile();
+    await send(app, 'localStorage', 'remove', 'key');
+    await wait(100);
+    localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({}));
 });
 
-test('getAll', async() => {
-    // We can not test ipc responses yet...
-    // https://github.com/electron/spectron/issues/98
+test('getAll', async (t) => {
+    const app = await getApp(t);
+    storageFile = 'test_getAll.json';
+    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
+        fileName: storageFile
+    });
+    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    await send(app, 'localStorage', 'set', 'key', 'value');
+    const result = await fetch(app, 'localStorage', 'getAll');
+    t.deepEqual(result[2], { key: 'value' });
 });
