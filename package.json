@@ -1,0 +1,54 @@
+{
+    "name": "meteor-desktop-localstorage",
+    "version": "0.0.1",
+    "engines": {
+        "node": ">=6.0.0"
+    },
+    "description": "Meteor Desktop localStorage replacement",
+    "main": "dist/index.js",
+    "scripts": {
+        "test": "ava tests/functional/**/*.js --verbose -s",
+        "test-watch": "ava tests/functional/**/*.js --source dist/**/* --watch --verbose -s",
+        "lint": "eslint src tests",
+        "build": "babel src --out-dir dist --source-maps inline --copy-files",
+        "build-watch": "babel src --watch --out-dir dist --source-maps inline --copy-files",
+        "version": "node dist/scripts/propagateVersion.js && git add plugins",
+        "postversion": "npm run publish-all",
+        "postinstall": "node dist/scripts/addToScripts || echo",
+        "publish-plugins": "(cls || reset) && cd plugins/localstorage && (meteor publish || echo)",
+        "prepublish": "npm run build || echo",
+        "publish-all": "npm run publish-plugins && npm publish"
+    },
+    "author": "Bartosz Wojtkowiak <bartosz@wojtkowiak.it>",
+    "license": "MIT",
+    "devDependencies": {
+        "ava": "^0.16.0",
+        "babel-cli": "^6.16.0",
+        "babel-preset-node6": "^11.0.0",
+        "eslint": "^3.7.1",
+        "eslint-config-airbnb-base": "^8.0.0",
+        "eslint-plugin-import": "^2.0.0",
+        "spectron": "^3.4.0",
+        "shelljs": "^0.7.4",
+        "electron": "^1.4.2",
+        "meteor-desktop-plugin-test-suite": "./../meteor-desktop-plugin-test-suite"
+    },
+    "dependencies": {
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/wojtkowiak/meteor-desktop-localstorage"
+    },
+    "keywords": [
+        "electron",
+        "meteor",
+        "packager",
+        "localstorage",
+        "local",
+        "storage"
+    ],
+    "bugs": {
+        "url": "https://github.com/wojtkowiak/meteor-desktop-localstorage/issues"
+    },
+    "homepage": "https://github.com/wojtkowiak/meteor-desktop-localstorage"
+}
