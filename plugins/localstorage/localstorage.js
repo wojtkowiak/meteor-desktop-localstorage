@@ -1,13 +1,25 @@
 /* eslint-disable no-underscore-dangle */
+let retries = 0;
+
+/**
+ * Fetches local storage data from the meteor-desktop-localstorage plugin.
+ * Retries 5 times, then fails.
+ */
 function load() {
     Desktop.fetch('localStorage', 'getAll').then((storage) => {
         Meteor._localStorage.storage = storage;
     }).catch(() => {
-        load();
+        retries += 1;
+        if (retries < 5) {
+            load();
+        } else {
+            console.error('failed to load localStorage contents');
+        }
     });
 }
 
 if (Meteor.isDesktop) {
+    // Replace Meteor's localStorage with ours.
     Meteor._localStorage = {
         storage: {},
 

@@ -8,7 +8,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "ava tests/functional/**/*.js -s",
-    "test-watch": "ava tests/functional/**/*.js --watch --verbose -s",
+    "test-watch": "ava tests/functional/**/*.js --watch --source src --verbose -s",
     "lint": "eslint src tests plugins",
     "build": "babel src --out-dir dist --source-maps inline --copy-files",
     "build-watch": "babel src --watch --out-dir dist --source-maps inline --copy-files",
