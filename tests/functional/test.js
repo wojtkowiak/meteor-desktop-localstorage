@@ -64,6 +64,16 @@ function readLocalStorageFile(filename = 'localstorage.json') {
     return fs.readFileSync(path.join(userData, filename), 'utf8');
 }
 
+async function prepareTest(app, t, fileName) {
+    storageFile = fileName;
+    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
+        fileName: storageFile
+    });
+    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    const localstorage = readLocalStorageFile(storageFile);
+    t.is(localstorage, JSON.stringify({}));
+}
+
 test('the test app', async t => await getApp(t));
 
 test.serial('if storage file is initialized', async (t) => {
@@ -77,14 +87,10 @@ test.serial('if storage file is initialized', async (t) => {
 
 test.serial('if custom filename can be passed', async (t) => {
     const app = await getApp(t);
-    storageFile = 'test.json';
-    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
-        fileName: 'test.json'
-    });
-    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    await prepareTest(app, t, 'test.json');
     await send(app, 'localStorage', 'set', 'key', 'value');
     await wait(100);
-    t.is(readLocalStorageFile('test.json'), JSON.stringify({ key: 'value' }));
+    t.is(readLocalStorageFile(storageFile), JSON.stringify({ key: 'value' }));
 });
 
 // TODO: figure out running test apps with unique chromedriver port so that we could
@@ -92,60 +98,42 @@ test.serial('if custom filename can be passed', async (t) => {
 
 test('set', async (t) => {
     const app = await getApp(t);
-    storageFile = 'test_set.json';
-    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
-        fileName: storageFile
-    });
-    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
-    let localstorage = readLocalStorageFile(storageFile);
-    t.is(localstorage, JSON.stringify({}));
+    await prepareTest(app, t, 'test_set.json');
     await send(app, 'localStorage', 'set', 'key', 'value');
     await wait(100);
-    localstorage = readLocalStorageFile(storageFile);
+    const localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({ key: 'value' }));
 });
 
+async function prepareTestAndSetKey(app, t, fileName, key, value) {
+    await prepareTest(app, t, fileName);
+    await send(app, 'localStorage', 'set', key, value);
+    await wait(100);
+    const localstorage = readLocalStorageFile(storageFile);
+    t.is(localstorage, JSON.stringify({ [key]: value }));
+}
+
 test('clear', async (t) => {
     const app = await getApp(t);
-    storageFile = 'test_clear.json';
-    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
-        fileName: storageFile
-    });
-    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
-    let localstorage = readLocalStorageFile(storageFile);
-    t.is(localstorage, JSON.stringify({}));
-    await send(app, 'localStorage', 'set', 'key', 'value');
-    await wait(100);
-    localstorage = readLocalStorageFile(storageFile);
-    t.is(localstorage, JSON.stringify({ key: 'value' }));
+    await prepareTestAndSetKey(app, t, 'local_clear.json', 'key', 'value');
     await send(app, 'localStorage', 'clear');
     await wait(100);
-    localstorage = readLocalStorageFile(storageFile);
+    const localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({}));
 });
 
 test('remove', async (t) => {
     const app = await getApp(t);
-    storageFile = 'test_remove.json';
-    await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
-        fileName: storageFile
-    });
-    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
-    let localstorage = readLocalStorageFile(storageFile);
-    t.is(localstorage, JSON.stringify({}));
-    await send(app, 'localStorage', 'set', 'key', 'value');
-    await wait(100);
-    localstorage = readLocalStorageFile(storageFile);
-    t.is(localstorage, JSON.stringify({ key: 'value' }));
+    await prepareTestAndSetKey(app, t, 'test_remove.json', 'key', 'value');
     await send(app, 'localStorage', 'remove', 'key');
     await wait(100);
-    localstorage = readLocalStorageFile(storageFile);
+    const localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({}));
 });
 
 test('getAll', async (t) => {
     const app = await getApp(t);
-    storageFile = 'test_getAll.json';
+    await prepareTest(app, t, 'test_getAll.json');
     await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
         fileName: storageFile
     });
