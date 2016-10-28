@@ -1,6 +1,6 @@
 {
   "name": "meteor-desktop-localstorage",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "engines": {
     "node": ">=6.0.0"
   },
