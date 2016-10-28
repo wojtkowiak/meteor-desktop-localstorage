@@ -1,7 +1,7 @@
 Package.describe({
     name: 'omega:meteor-desktop-localstorage',
     summary: 'Persistent localStorage for meteor-desktop',
-    version: '0.0.8',
+    version: '0.0.9',
     git: 'https://github.com/wojtkowiak/meteor-desktop-localstorage',
     documentation: 'README.md'
 });
