@@ -36,7 +36,7 @@ export default class LocalStorage {
         this.storage = {};
         this.initDone = false;
         this.eventsBus = eventsBus;
-        this.log = log.loggers.get('meteor-desktop-localstorage');
+        this.log = log;
 
         eventsBus.on('afterLoading', () => {
             this.init();
