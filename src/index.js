@@ -17,24 +17,20 @@ export default class LocalStorage {
 
     /**
      * @param {Object} log              - Winston logger
-     * @param {Object} skeletonApp      - reference to the Electron app
-     * @param {Object} appSettings      - settings.json object
      * @param {Object} eventsBus        - event emitter for listening or emitting events on the
      *                                    desktop side
-     * @param {Object} modules          - reference to all loaded modules
-     * @param {PluginSettings} fileName - the name of the json file
+     * @param {PluginSettings} settings - plugin settings
      * @param {Object} Module           - reference to Module class
      */
-    constructor(
+    constructor({
         log,
-        skeletonApp,
-        appSettings,
         eventsBus,
-        modules,
-        { fileName = 'localstorage.json' },
+        settings,
         Module
-    ) {
+    }) {
         const storageModule = new Module('localStorage');
+
+        const { fileName = 'localstorage.json' } = settings;
 
         this.storageFile = path.join(app.getPath('userData'), fileName);
         this.storage = {};

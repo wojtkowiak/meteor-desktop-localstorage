@@ -4,11 +4,12 @@ import { Application } from 'spectron';
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
+import electron from 'electron';
 import {
-    getElectronPath, constructPlugin, createTestApp, send, fetch,
+    constructPlugin, createTestApp, send, fetch,
     fireEventsBusEventAndWaitForAnother
 } from
-    'meteor-desktop-plugin-test-suite';
+    'meteor-desktop-test-suite';
 
 let userData;
 let storageFile;
@@ -43,7 +44,7 @@ test.after(
 
 test.beforeEach(async (t) => {
     t.context.app = new Application({
-        path: getElectronPath(),
+        path: electron,
         args: [appDir],
         env: { ELECTRON_ENV: 'test' }
     });
@@ -52,6 +53,17 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
+    try {
+        // Test app saves an error.txt file if it encounters an uncaught exception.
+        // It is good to see it's contents if it is present.
+        const errorFile = path.join(appDir, 'error.txt');
+        console.log(
+            'error caught in the test app:',
+            fs.readFileSync(errorFile, 'utf8')
+        );
+        fs.unlinkSync(errorFile);
+    } catch (e) {
+    }
     if (storageFile) {
         shell.rm('-f', path.join(userData, storageFile));
     }
@@ -140,5 +152,5 @@ test('getAll', async (t) => {
     await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
     await send(app, 'localStorage', 'set', 'key', 'value');
     const result = await fetch(app, 'localStorage', 'getAll');
-    t.deepEqual(result[2], { key: 'value' });
+    t.deepEqual(result[0], { key: 'value' });
 });
