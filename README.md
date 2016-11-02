@@ -16,7 +16,7 @@ In your `.desktop/settings.json` add this package to your plugins list:
 {
     "plugins": {
        "meteor-desktop-localstorage": {
-            "version": "0.0.10"
+            "version": "0.0.11"
         }
     }
 }
@@ -29,7 +29,7 @@ You can pass custom settings to the plugin, for example:
 {
     "plugins": {
        "meteor-desktop-localstorage": {
-            "version": "0.0.10",
+            "version": "0.0.11",
             "fileName": "myCustomName.json"
         }
     }
