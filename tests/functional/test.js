@@ -81,7 +81,7 @@ async function prepareTest(app, t, fileName) {
     await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
         fileName: storageFile
     });
-    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    await fireEventsBusEventAndWaitForAnother(app, 'desktopLoaded', 'localStorage.loaded');
     const localstorage = readLocalStorageFile(storageFile);
     t.is(localstorage, JSON.stringify({}));
 }
@@ -92,7 +92,7 @@ test.serial('if storage file is initialized', async (t) => {
     const app = await getApp(t);
     storageFile = 'localstorage.json';
     await constructPlugin(app);
-    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    await fireEventsBusEventAndWaitForAnother(app, 'desktopLoaded', 'localStorage.loaded');
     const localstorage = readLocalStorageFile();
     t.is(localstorage, '{}');
 });
@@ -149,7 +149,7 @@ test('getAll', async (t) => {
     await constructPlugin(app, undefined, undefined, undefined, undefined, undefined, {
         fileName: storageFile
     });
-    await fireEventsBusEventAndWaitForAnother(app, 'afterLoading', 'localStorage.loaded');
+    await fireEventsBusEventAndWaitForAnother(app, 'desktopLoaded', 'localStorage.loaded');
     await send(app, 'localStorage', 'set', 'key', 'value');
     const result = await fetch(app, 'localStorage', 'getAll');
     t.deepEqual(result[0], { key: 'value' });

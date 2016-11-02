@@ -38,7 +38,7 @@ export default class LocalStorage {
         this.eventsBus = eventsBus;
         this.log = log;
 
-        eventsBus.on('afterLoading', () => {
+        eventsBus.on('desktopLoaded', () => {
             this.init();
         });
 
